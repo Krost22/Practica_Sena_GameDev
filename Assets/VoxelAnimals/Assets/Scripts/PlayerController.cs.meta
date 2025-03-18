@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 40079260bda69f14c80332a04d1632a6
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 145754
+  packageName: 5 animated Voxel animals
+  packageVersion: 1.0
+  assetPath: Assets/VoxelAnimals/Assets/Scripts/PlayerController.cs
+  uploadId: 309695

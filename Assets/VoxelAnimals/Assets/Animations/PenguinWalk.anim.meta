@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 95cc5be18fecb7745ad12aa05edeec30
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 145754
+  packageName: 5 animated Voxel animals
+  packageVersion: 1.0
+  assetPath: Assets/VoxelAnimals/Assets/Animations/PenguinWalk.anim
+  uploadId: 309695

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 50c4095252afdec45a8f6fcf1ddee923
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 145754
+  packageName: 5 animated Voxel animals
+  packageVersion: 1.0
+  assetPath: Assets/VoxelAnimals/Assets/Animations/CatWalk.anim
+  uploadId: 309695

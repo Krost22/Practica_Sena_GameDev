@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: da87f0caf717cb746a640124438be23c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 145754
+  packageName: 5 animated Voxel animals
+  packageVersion: 1.0
+  assetPath: Assets/VoxelAnimals/Assets/Animations/Chicken.controller
+  uploadId: 309695

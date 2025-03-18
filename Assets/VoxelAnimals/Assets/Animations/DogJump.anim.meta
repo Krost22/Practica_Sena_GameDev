@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a4165f72720355d45bba034bbe9a3316
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 145754
+  packageName: 5 animated Voxel animals
+  packageVersion: 1.0
+  assetPath: Assets/VoxelAnimals/Assets/Animations/DogJump.anim
+  uploadId: 309695
