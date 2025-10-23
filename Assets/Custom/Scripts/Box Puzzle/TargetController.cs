@@ -18,6 +18,26 @@ public class TargetController : MonoBehaviour
 
     public void UpdateVisual()
     {
+        // Verificar que meshRenderer no sea null
+        if (meshRenderer == null)
+        {
+            Debug.LogWarning("TargetController: meshRenderer es null en UpdateVisual");
+            return;
+        }
+
+        // Verificar que los materiales no sean null
+        if (isOccupied && activeMaterial == null)
+        {
+            Debug.LogWarning("TargetController: activeMaterial es null");
+            return;
+        }
+
+        if (!isOccupied && inactiveMaterial == null)
+        {
+            Debug.LogWarning("TargetController: inactiveMaterial es null");
+            return;
+        }
+
         meshRenderer.material = isOccupied ? activeMaterial : inactiveMaterial;
     }
 }
