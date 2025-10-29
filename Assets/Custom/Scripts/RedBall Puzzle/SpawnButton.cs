@@ -16,15 +16,30 @@ public class SpawnButton : MonoBehaviour
     private bool canActivate = true;
     private bool isPressed = false;
     private float lastActivationTime;
+
+    //On Puzzle Completed
+    private MeshRenderer meshRenderer;
+    public Material disableMaterial;
+
+    public AudioSource audioCompleted;
+
     
     void Start()
     {
         // Obtener el ConfigurableJoint del botón
         buttonJoint = GetComponent<ConfigurableJoint>();
+
+        //On Puzzle Completed
+        meshRenderer = GetComponent<MeshRenderer>();
         
         if (buttonJoint == null)
         {
             Debug.LogError("SpawnButton: No se encontró ConfigurableJoint en este GameObject");
+        }
+        
+        if (meshRenderer == null)
+        {
+            Debug.LogError("SpawnButton: No se encontró MeshRenderer en este GameObject");
         }
     }
 
@@ -144,5 +159,32 @@ public class SpawnButton : MonoBehaviour
     {
         isPressed = false;
         canActivate = true;
+    }
+
+    public void OnPuzzleCompleted()
+    {
+        // Cambiar el material del objeto
+        if (meshRenderer != null && disableMaterial != null)
+        {
+            meshRenderer.material = disableMaterial;
+        }
+        else
+        {
+            Debug.LogWarning("SpawnButton: No se pudo cambiar el material - MeshRenderer o Material faltante");
+        }
+        
+        // Reproducir el audio de completado
+        if (audioCompleted != null)
+        {
+            audioCompleted.Play();
+        }
+        else
+        {
+            Debug.LogWarning("SpawnButton: No se pudo reproducir el audio - AudioSource faltante");
+        }
+    }
+    public void DisableButton()
+    {
+        //TO DO: desactivar el configurable joint del boton y cambiar la logica de cambio de material a esta funcion para mayor orden
     }
 }

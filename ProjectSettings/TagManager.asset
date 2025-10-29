@@ -7,6 +7,7 @@ TagManager:
   - CinemachineTarget
   - Ground
   - ButtonTrigger
+  - RedBall
   layers:
   - Default
   - TransparentFX
