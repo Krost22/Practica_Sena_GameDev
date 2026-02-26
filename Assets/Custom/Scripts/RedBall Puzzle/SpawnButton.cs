@@ -16,6 +16,7 @@ public class SpawnButton : MonoBehaviour
     private bool canActivate = true;
     private bool isPressed = false;
     private float lastActivationTime;
+    private bool isPermanentlyDisabled = false;
 
     //On Puzzle Completed
     private MeshRenderer meshRenderer;
@@ -46,6 +47,9 @@ public class SpawnButton : MonoBehaviour
     // Método llamado cuando el botón entra en contacto con el trigger
     private void OnTriggerEnter(Collider other)
     {
+        // Si el botón está desactivado, no procesar nada
+        if (!canActivate) return;
+
         // Verificar si el objeto que toca el trigger tiene el tag correcto
         if (other.CompareTag(triggerTag))
         {
@@ -55,7 +59,7 @@ public class SpawnButton : MonoBehaviour
                 Destroy(currentSpawnedObject);
             }
             
-            if (canActivate && !isPressed)
+            if (!isPressed)
             {
                 isPressed = true;
                 ActivateButton();
@@ -157,34 +161,60 @@ public class SpawnButton : MonoBehaviour
     // Método para resetear el estado del botón
     public void ResetButton()
     {
+        if (isPermanentlyDisabled) return;
         isPressed = false;
         canActivate = true;
     }
 
     public void OnPuzzleCompleted()
     {
-        // Cambiar el material del objeto
+        DisableButton();
+    }
+
+    public void DisableButton()
+    {
+        // Evitar ejecuciones múltiples si ya está desactivado
+        if (isPermanentlyDisabled) return;
+        isPermanentlyDisabled = true;
+
+        // Detener cualquier cooldown en curso para evitar que reactive el botón
+        StopAllCoroutines();
+
+        canActivate = false;
+        isPressed = false;
+
+        // 1. Bloqueo Físico: Congelar el botón en su posición actual
+        // Los Joints no tienen propiedad 'enabled', al hacer el Rigidbody isKinematic es suficiente para bloquearlo.
+        if (buttonJoint != null)
+        {
+            Destroy(buttonJoint);
+        }
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // 2. Feedback Visual: Cambiar al material de desactivado
         if (meshRenderer != null && disableMaterial != null)
         {
             meshRenderer.material = disableMaterial;
         }
-        else
+        else if (disableMaterial == null)
         {
-            Debug.LogWarning("SpawnButton: No se pudo cambiar el material - MeshRenderer o Material faltante");
+            Debug.LogWarning($"SpawnButton en {gameObject.name}: No se ha asignado el material de desactivado.");
         }
-        
-        // Reproducir el audio de completado
+
+        // 3. Feedback Auditivo: Reproducir sonido de éxito/completado
         if (audioCompleted != null)
         {
-            audioCompleted.Play();
+            if (!audioCompleted.isPlaying)
+                audioCompleted.Play();
         }
-        else
-        {
-            Debug.LogWarning("SpawnButton: No se pudo reproducir el audio - AudioSource faltante");
-        }
-    }
-    public void DisableButton()
-    {
-        //TO DO: desactivar el configurable joint del boton y cambiar la logica de cambio de material a esta funcion para mayor orden
+
+        Debug.Log($"<color=green>SpawnButton:</color> El botón en <b>{gameObject.name}</b> ha sido desactivado correctamente.");
     }
 }
