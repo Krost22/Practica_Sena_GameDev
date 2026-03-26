@@ -56,7 +56,7 @@ public class CameraManager : MonoBehaviour
         cameraTriggers.Clear();
         
         // Buscar todos los CameraTrigger en la escena
-        CameraTrigger[] allTriggers = FindObjectsOfType<CameraTrigger>();
+        CameraTrigger[] allTriggers = Object.FindObjectsByType<CameraTrigger>(FindObjectsSortMode.None);
         
         foreach (CameraTrigger trigger in allTriggers)
         {
@@ -219,10 +219,9 @@ public class CameraManager : MonoBehaviour
         }
     }
     
-    // Desactivar todas las cámaras en la escena
     private void DeactivateAllCameras()
     {
-        Camera[] allCameras = FindObjectsOfType<Camera>();
+        Camera[] allCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
         foreach (Camera cam in allCameras)
         {
             if (cam != null)

@@ -214,7 +214,5 @@ public class SpawnButton : MonoBehaviour
             if (!audioCompleted.isPlaying)
                 audioCompleted.Play();
         }
-
-        Debug.Log($"<color=green>SpawnButton:</color> El botón en <b>{gameObject.name}</b> ha sido desactivado correctamente.");
     }
 }

@@ -13,7 +13,7 @@ public class BoxInteractionController : MonoBehaviour
     [SerializeField] private Transform grabPoint; // Punto donde se sostiene la caja
 
     private BoxController carriedBox;
-    private PlayerMovement playerMovement;
+    private PlayerController playerController;
 
     // Propiedades públicas
     public BoxController CarriedBox => carriedBox;
@@ -21,10 +21,10 @@ public class BoxInteractionController : MonoBehaviour
 
     void Start()
     {
-        playerMovement = GetComponent<PlayerMovement>();
-        if (playerMovement == null)
+        playerController = GetComponent<PlayerController>();
+        if (playerController == null)
         {
-            Debug.LogError("BoxInteractionController: No se encontró PlayerMovement en el GameObject");
+            Debug.LogError("BoxInteractionController: No se encontró PlayerController en el GameObject");
         }
     }
 
@@ -72,9 +72,9 @@ public class BoxInteractionController : MonoBehaviour
                     carriedBox.Grab(grabPoint);
                     
                     // Reducir velocidad al cargar caja
-                    if (playerMovement != null)
+                    if (playerController != null)
                     {
-                        playerMovement.SetMovementSpeed(grabSpeedMultiplier);
+                        playerController.SetMovementSpeed(grabSpeedMultiplier);
                     }
                 }
             }
@@ -91,19 +91,19 @@ public class BoxInteractionController : MonoBehaviour
             {
                 releaseVelocity = transform.forward * 10f + Vector3.up * 3f;
             }
-            else if (playerMovement != null)
+            else if (playerController != null)
             {
                 // Mantener velocidad horizontal del jugador
-                Vector3 currentVel = playerMovement.CurrentVelocity;
+                Vector3 currentVel = playerController.CurrentVelocity;
                 releaseVelocity = new Vector3(currentVel.x, 0, currentVel.z);
             }
 
             carriedBox.Release(releaseVelocity);
             
             // Restaurar velocidad original
-            if (playerMovement != null)
+            if (playerController != null)
             {
-                playerMovement.ResetMovementStats();
+                playerController.ResetMovementStats();
             }
             
             carriedBox = null;

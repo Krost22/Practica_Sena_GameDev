@@ -9,7 +9,6 @@ public class CameraTrigger : MonoBehaviour
     
     [Header("Configuración de Transición")]
     [SerializeField] private bool instantTransition = false; // Transición instantánea
-    [SerializeField] private float transitionSpeed = 2f; // Velocidad de transición
     
     [Header("Configuración del Trigger")]
     [SerializeField] private bool destroyAfterUse = false; // Si se destruye después de activarse

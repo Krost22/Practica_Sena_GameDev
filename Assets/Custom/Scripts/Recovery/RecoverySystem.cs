@@ -10,13 +10,21 @@ public class RecoverySystem : MonoBehaviour
     [SerializeField] private GameObject recoveryKeyitem;
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject == player)
+        if (other.CompareTag("Player"))
         {
-            //Se coloca el jugador en la posición de recuperación
+            // Para teletransportar un objeto con CharacterController, primero hay que apagarlo
+            CharacterController cc = player.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+            
+            // Se asinga la nueva posición
             player.transform.position = recoveryPlayer.transform.position;
+            
+            // Se vuelve a encender
+            if (cc != null) cc.enabled = true;
+
             OnRecoveryVFX();
         }
-        if (other.gameObject == Keyitem)
+        if (other.CompareTag("Box"))
         {
             Keyitem.transform.position = recoveryKeyitem.transform.position;
         }

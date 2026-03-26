@@ -8,6 +8,8 @@ TagManager:
   - Ground
   - ButtonTrigger
   - RedBall
+  - Keyitem
+  - Box
   layers:
   - Default
   - TransparentFX

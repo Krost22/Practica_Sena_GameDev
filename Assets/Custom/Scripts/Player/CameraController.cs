@@ -108,7 +108,7 @@ public class CameraController : MonoBehaviour
     private Camera FindActiveCamera()
     {
         // Buscar todas las cámaras en la escena
-        Camera[] allCameras = FindObjectsOfType<Camera>();
+        Camera[] allCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
         
         // Prioridad 1: Buscar cámara con tag "MainCamera" que esté activa
         foreach (Camera cam in allCameras)
