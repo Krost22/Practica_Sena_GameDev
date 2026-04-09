@@ -1,129 +1,102 @@
+using System.Diagnostics.Contracts;
 using UnityEngine;
+using UnityEngine.Events;
 
+[RequireComponent(typeof(Rigidbody))]
 public class BoxController : MonoBehaviour
 {
+    [Header("Estado (Solo lectura)")]
     public bool isOnTarget;
     public bool isGrabbed;
-    public Transform grabAnchor; // Punto de agarre (asignar en prefab)
-    [SerializeField] private LayerMask targetLayer; // Layer del target
     
-    private Vector3 lastValidPosition;
+    [Header("Configuración")]
+    public Transform grabAnchor; 
+    
+    private Vector3 initialPosition;
+    private Quaternion initialRotation;
     private Rigidbody rb;
     private Transform grabber;
     private Transform currentTarget;
 
+    [Header("Public Events")]
+    public UnityEvent OnKeyItemGrab;
+    public UnityEvent OnKeyItemRelease;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        lastValidPosition = transform.position;
+        initialPosition = transform.position;
+        initialRotation = transform.rotation;
         rb.maxAngularVelocity = 0.1f;
     }
 
-    public void Grab(Transform grabber)
+    public void Grab(Transform newGrabber)
     {
         isGrabbed = true;
-        this.grabber = grabber;
-        rb.isKinematic = true;
+        this.grabber = newGrabber;
+        
+        rb.isKinematic = true; // Se mantiene en mano
         rb.interpolation = RigidbodyInterpolation.None;
+        
         transform.SetParent(grabber);
         transform.position = grabber.position;
         transform.rotation = grabber.rotation;
+
+        OnKeyItemGrab?.Invoke();
+
+        if (isOnTarget)
+        {
+            isOnTarget = false;
+            currentTarget = null;
+        }
     }
 
     public void Release(Vector3 releaseVelocity)
     {
         isGrabbed = false;
-        rb.isKinematic = false;
-        rb.interpolation = RigidbodyInterpolation.Interpolate;
         transform.SetParent(null);
         
-        // Aplicar inercia al soltar
-        rb.linearVelocity = releaseVelocity * 0.8f;
+        // Retornamos las fisicas nativas para que se mueva a su entorno 
+        rb.isKinematic = false;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
         
-        // Guardar posición para posible reset
-        lastValidPosition = transform.position;
+        // Unity 6 Native: linearVelocity en lugar de velocity
+        rb.linearVelocity = releaseVelocity * 0.8f;
+
+        OnKeyItemRelease?.Invoke();
     }
 
-    public void PlaceOnTarget()
+    public void PlaceOnTarget(Transform targetTransform)
     {
-        if (isOnTarget && currentTarget != null)
-        {
-            // Detener toda la velocidad antes de hacer cinemático
-            if (!rb.isKinematic)
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            }
-            
-            // Hacer cinemático
-            rb.isKinematic = true;
-            
-            // Colocar la caja exactamente en el target
-            transform.position = currentTarget.position;
-            transform.rotation = currentTarget.rotation;
-            
-            // Aquí podrías añadir efectos visuales
-        }
+        if (isGrabbed) return; 
+
+        isOnTarget = true;
+        currentTarget = targetTransform;
+        
+        // Evitamos posibles tirones físicos del Hinge o Colisiones al hacer snap
+        rb.isKinematic = true;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        
+        // Asignamos la posicion y emparentamos inteligentemente a la base objetivo
+        transform.position = targetTransform.position;
+        transform.rotation = targetTransform.rotation;
+        transform.SetParent(targetTransform); 
     }
 
     public void ResetPosition()
     {
-        Release(Vector3.zero);
-        transform.position = lastValidPosition;
+        if (isGrabbed) return;
+        
+        isOnTarget = false;
+        currentTarget = null;
+        transform.SetParent(null);
+        
+        rb.isKinematic = false;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
-    }
-
-    // Detectar cuando entra en contacto con el target
-    private void OnTriggerEnter(Collider other)
-    {
-        if (((1 << other.gameObject.layer) & targetLayer) != 0)
-        {
-            isOnTarget = true;
-            currentTarget = other.transform;
-            PlaceOnTarget();
-        }
-    }
-
-    // Detectar cuando sale del target
-    private void OnTriggerExit(Collider other)
-    {
-        if (((1 << other.gameObject.layer) & targetLayer) != 0)
-        {
-            isOnTarget = false;
-            currentTarget = null;
-            
-            // Reactivar física si no está siendo agarrada
-            if (!isGrabbed)
-            {
-                rb.isKinematic = false;
-            }
-        }
-    }
-
-    // Alternativa usando OnCollisionEnter si prefieres colisiones físicas
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (((1 << collision.gameObject.layer) & targetLayer) != 0)
-        {
-            isOnTarget = true;
-            currentTarget = collision.transform;
-            PlaceOnTarget();
-        }
-    }
-
-    private void OnCollisionExit(Collision collision)
-    {
-        if (((1 << collision.gameObject.layer) & targetLayer) != 0)
-        {
-            isOnTarget = false;
-            currentTarget = null;
-            
-            // Reactivar física si no está siendo agarrada
-            if (!isGrabbed)
-            {
-                rb.isKinematic = false;
-            }
-        }
+        
+        transform.position = initialPosition;
+        transform.rotation = initialRotation;
     }
 }

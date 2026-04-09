@@ -1,217 +1,112 @@
-// PuzzleManager.cs - Controla la lógica global
 using System.Collections.Generic;
 using UnityEngine;
-using System.Collections;
+using UnityEngine.Events;
 
 public class PuzzleManager : MonoBehaviour
 {
+    [Header("Elementos del Puzzle")]
+    [Tooltip("Lista guardada opcional para el reset del nivel")]
     public List<BoxController> boxes;
     public List<TargetController> targets;
+    
+    [Header("Puerta y Salida")]
+    [Tooltip("Referencia a la puerta (Door_Prefab_Opened o Door) para desbloquear")]
     public GameObject exitDoor;
-    [SerializeField] private float placementThreshold = 0.5f;
-    [SerializeField] private float checkInterval = 0.1f; // Verificar cada 0.1 segundos en lugar de cada frame
     
-    private bool isInitialized = false;
+    [Header("Eventos (Opcional y Escalable)")]
+    public UnityEvent OnPuzzleComplete;
+    public UnityEvent OnPuzzleIncomplete;
+    
     private bool puzzleComplete = false;
-    
-    void Start()
-    {
-        StartCoroutine(InitializePuzzle());
-    }
-    
-    private Coroutine puzzleStateCoroutine;
-    private Coroutine boxPlacementCoroutine;
-    
-    void Update()
-    {
-        // Solo verificar si está inicializado
-        if (isInitialized)
-        {
-            // Iniciar corrutinas solo si no están ejecutándose
-            if (puzzleStateCoroutine == null)
-            {
-                puzzleStateCoroutine = StartCoroutine(CheckPuzzleStateCoroutine());
-            }
-            
-            if (boxPlacementCoroutine == null)
-            {
-                boxPlacementCoroutine = StartCoroutine(CheckBoxPlacementCoroutine());
-            }
-        }
-    }
-    
-    private IEnumerator InitializePuzzle()
-    {
-        // Esperar un frame para asegurar que todo esté inicializado
-        yield return null;
-        
-        // Verificar que las listas estén asignadas
-        if (targets == null || boxes == null)
-        {
-            Debug.LogError("PuzzleManager: Las listas targets o boxes no están asignadas en el Inspector");
-            yield break;
-        }
-        
-        // Verificar elementos individuales
-        for (int i = 0; i < targets.Count; i++)
-        {
-            if (targets[i] == null)
-            {
-                Debug.LogError($"PuzzleManager: Target en índice {i} es null");
-            }
-        }
-        
-        for (int i = 0; i < boxes.Count; i++)
-        {
-            if (boxes[i] == null)
-            {
-                Debug.LogError($"PuzzleManager: Box en índice {i} es null");
-            }
-        }
-        
-        isInitialized = true;
-        Debug.Log("PuzzleManager inicializado correctamente");
-    }
 
-    private IEnumerator CheckPuzzleStateCoroutine()
+    // Se eliminó la ineficiencia del Update() y Corrutinas.
+    // Ahora es un método ligero    // Método disparado por TargetController de forma eficiente
+    public void CheckPuzzleState()
     {
-        // Evitar múltiples ejecuciones simultáneas
-        if (!isInitialized) yield break;
+        bool allOccupied = true;
         
-        // Esperar el intervalo antes de verificar
-        yield return new WaitForSeconds(checkInterval);
-        
-        bool newPuzzleComplete = true;
-        
-        // Usar índices en lugar de foreach para evitar problemas de concurrencia
+        Debug.Log($"Revisando Puzzle: Hay {targets.Count} bases objetivo en la lista del PuzzleManager.");
+
         for (int i = 0; i < targets.Count; i++)
         {
             TargetController target = targets[i];
-            if (target == null) continue;
-            
-            target.isOccupied = false;
-            
-            for (int j = 0; j < boxes.Count; j++)
+            if (target == null)
             {
-                BoxController box = boxes[j];
-                if (box == null) continue;
-                
-                try
-                {
-                    float distance = Vector3.Distance(target.transform.position, box.transform.position);
-                    
-                    if (distance < placementThreshold)
-                    {
-                        target.isOccupied = true;
-                        box.isOnTarget = (box == target.correctBox);
-                        
-                        if (box == target.correctBox)
-                        {
-                            box.PlaceOnTarget();
-                        }
-                    }
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogError($"Error verificando distancia entre target {i} y box {j}: {e.Message}");
-                }
+                Debug.LogWarning($"El Target en el espacio {i} de la lista está vacío. Revisa el inspector del PuzzleManager.");
+                continue;
             }
-            
-            try
+
+            if (!target.isOccupied)
             {
-                target.UpdateVisual();
-                
-                // Verificar que correctBox no sea null antes de acceder a sus propiedades
-                if (!target.isOccupied || (target.correctBox != null && !target.correctBox.isOnTarget))
-                    newPuzzleComplete = false;
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"Error actualizando visual del target {i}: {e.Message}");
+                Debug.Log($"El Target {target.gameObject.name} aún NO está ocupado.");
+                allOccupied = false;
+                break; // Hay un objetivo libre, salimos
             }
         }
         
-        // Solo actualizar el estado si ha cambiado
-        if (newPuzzleComplete != puzzleComplete)
+        if (allOccupied && !puzzleComplete)
         {
-            puzzleComplete = newPuzzleComplete;
+            puzzleComplete = true;
+            Debug.Log("¡TODOS LOS OBJETIVOS LLENOS! Puzzle Completado. Abriendo la puerta.");
             
-            try
-            {
-                if (exitDoor != null)
-                {
-                    exitDoor.SetActive(!puzzleComplete);
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"Error actualizando exitDoor: {e.Message}");
-            }
+            HandleDoorStatus(true);
+            OnPuzzleComplete?.Invoke(); // Llama a cualquier cosa en el inspector
         }
-        
-        // Reiniciar la variable para permitir nueva ejecución
-        puzzleStateCoroutine = null;
+        else if (!allOccupied && puzzleComplete)
+        {
+            puzzleComplete = false;
+            
+            HandleDoorStatus(false);
+            OnPuzzleIncomplete?.Invoke();
+        }
     }
 
-    private IEnumerator CheckBoxPlacementCoroutine()
+    private void HandleDoorStatus(bool isComplete)
     {
-        if (!isInitialized) yield break;
-        
-        yield return new WaitForSeconds(checkInterval * 2); // Verificar menos frecuentemente
-        
-        // Usar índices para evitar problemas de concurrencia
-        for (int i = 0; i < targets.Count; i++)
+        if (exitDoor == null)
         {
-            TargetController target = targets[i];
-            if (target == null) continue;
+            Debug.LogError("La 'Exit Door' no está asignada en el PuzzleManager.");
+            return;
+        }
 
-            for (int j = 0; j < boxes.Count; j++)
+        // Inspeccionamos TODOS los hijos en busca del que realmente tenga el HingeJoint
+        Rigidbody[] doorRbs = exitDoor.GetComponentsInChildren<Rigidbody>();
+        Rigidbody correctRb = null;
+        
+        foreach (var rb in doorRbs)
+        {
+            if (rb.GetComponent<HingeJoint>() != null)
             {
-                BoxController box = boxes[j];
-                if (box == null) continue;
-
-                if (!box.isGrabbed)
-                {
-                    try
-                    {
-                        float distance = Vector3.Distance(target.transform.position, box.transform.position);
-                        
-                        if (distance < placementThreshold)
-                        {
-                            // Colocar automáticamente en el objetivo
-                            box.transform.position = target.transform.position;
-                            box.transform.rotation = Quaternion.identity;
-                            box.PlaceOnTarget();
-                        }
-                    }
-                    catch (System.Exception e)
-                    {
-                        Debug.LogError($"Error en CheckBoxPlacement entre target {i} y box {j}: {e.Message}");
-                    }
-                }
+                correctRb = rb;
+                break; // Encontramos la puerta principal
             }
         }
-        
-        // Reiniciar la variable para permitir nueva ejecución
-        boxPlacementCoroutine = null;
+
+        Animator doorAnim = exitDoor.GetComponentInChildren<Animator>();
+
+        if (correctRb != null)
+        {
+            Debug.Log($"¡Puerta lógica encontrada ({correctRb.name})! Cambiando isKinematic a {!isComplete}");
+            correctRb.isKinematic = !isComplete;
+            if (isComplete) correctRb.WakeUp();
+        }
+        else if (doorAnim != null)
+        {
+            doorAnim.SetBool("IsOpen", isComplete);
+        }
+        else
+        {
+            exitDoor.SetActive(!isComplete);
+        }
     }
 
     public void ResetPuzzle()
     {
-        // Verificar que la lista no sea null
-        if (boxes == null)
-        {
-            Debug.LogWarning("PuzzleManager: boxes lista es null en ResetPuzzle");
-            return;
-        }
-
+        if (boxes == null) return;
+        
         foreach (BoxController box in boxes)
         {
-            // Verificar que la box no sea null
-            if (box != null)
-            {
-                box.ResetPosition();
-            }
+            if (box != null) box.ResetPosition();
         }
     }
 }
