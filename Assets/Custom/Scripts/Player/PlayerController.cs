@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
     private CharacterController _characterController;
     private BoxInteractionController _boxInteraction;
     private CameraController _cameraController;
+    private Animator _animator;
 
     // Variables de estado
     private Vector3 _verticalVelocity;
@@ -42,6 +43,7 @@ public class PlayerController : MonoBehaviour
         _characterController = GetComponent<CharacterController>();
         _boxInteraction = GetComponent<BoxInteractionController>();
         _cameraController = GetComponent<CameraController>();
+        _animator = GetComponentInChildren<Animator>();
         
         // Guardar valores originales
         _originalMoveSpeed = moveSpeed;
@@ -93,16 +95,30 @@ public class PlayerController : MonoBehaviour
         // Vector horizontal directo, sin aceleración (hace el control más responsivo y simple)
         Vector3 horizontalMove = moveDirection * moveSpeed;
 
+        bool isWalking = moveDirection.magnitude > 0.1f;
+
         // Rotar el modelo hacia donde nos movemos instantáneamente o suavizado
-        if (moveDirection.magnitude > 0.1f)
+        if (isWalking)
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
 
+        // Actualizar animación
+        if (_animator != null)
+        {
+            _animator.SetBool("Walk", isWalking);
+        }
+
         // Mover combinando ejes: horizontal + vertical
         Vector3 finalMovement = horizontalMove + _verticalVelocity;
         _characterController.Move(finalMovement * Time.deltaTime);
+
+        // Actualizar animación de salto (después de usar Move, isGrounded se actualiza con precisión)
+        if (_animator != null)
+        {
+            _animator.SetBool("Jump", !_characterController.isGrounded);
+        }
     }
 
     private void HandleJump()

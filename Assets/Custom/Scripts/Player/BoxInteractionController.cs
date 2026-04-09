@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class BoxInteractionController : MonoBehaviour
 {
@@ -7,10 +8,17 @@ public class BoxInteractionController : MonoBehaviour
 
     [Header("Grab Settings")]
     [SerializeField] private KeyCode grabKey = KeyCode.E;
-    [SerializeField] private float grabRange = 2f;
+    [SerializeField] private float grabRange = 3.5f; // Mayor rango de distancia
+    [SerializeField] private float grabRadius = 0.75f; // Radio para facilitar apuntar a la caja
     [SerializeField] private float grabSpeedMultiplier = 0.7f;
     [SerializeField] private LayerMask boxLayer;
     [SerializeField] private Transform grabPoint; // Punto donde se sostiene la caja
+
+    [Header("Events")]
+    public UnityEvent<GameObject> OnBoxTargeted;
+    public UnityEvent OnBoxUntargeted;
+
+    private GameObject currentTargetBox;
 
     private BoxController carriedBox;
     private PlayerController playerController;
@@ -30,8 +38,87 @@ public class BoxInteractionController : MonoBehaviour
 
     void Update()
     {
+        CheckTargetBox();
         HandleGrabInput();
         UpdateCarriedBoxPosition();
+    }
+
+    private BoxController FindTargetBox()
+    {
+        Vector3 rayStart = transform.position + Vector3.up * 0.5f;
+        
+        // --- 1. Chequeo de proximidad (OverlapSphere) ---
+        // Esto soluciona el problema de Unity donde el SphereCast ignora objetos
+        // si ya estamos "dentro" o tocando sus colliders al momento de lanzarlo.
+        Collider[] overlaps = Physics.OverlapSphere(rayStart, grabRadius, boxLayer);
+        BoxController closestBox = null;
+        float closestDist = float.MaxValue;
+
+        foreach (var col in overlaps)
+        {
+            if (col.TryGetComponent<BoxController>(out var box) && !box.isOnTarget)
+            {
+                // Validar que la caja esté "frente" al jugador y no en su espalda
+                Vector3 dirToBox = (box.transform.position - transform.position).normalized;
+                if (Vector3.Dot(transform.forward, dirToBox) > 0.1f) // 0.1f significa "ligeramente al frente"
+                {
+                    float dist = Vector3.Distance(transform.position, box.transform.position);
+                    if (dist < closestDist)
+                    {
+                        closestDist = dist;
+                        closestBox = box;
+                    }
+                }
+            }
+        }
+
+        // Si encontramos una caja tocándonos, la devolvemos inmediatamente
+        if (closestBox != null) return closestBox;
+
+        // --- 2. Chequeo a distancia (SphereCast) ---
+        // Si no estamos tocando nada, lanzamos el "tubo" hacia adelante
+        if (Physics.SphereCast(rayStart, grabRadius, transform.forward, out RaycastHit hit, grabRange, boxLayer))
+        {
+            if (hit.collider.TryGetComponent<BoxController>(out var box) && !box.isOnTarget)
+            {
+                return box;
+            }
+        }
+
+        return null;
+    }
+
+    private void CheckTargetBox()
+    {
+        if (carriedBox != null)
+        {
+            if (currentTargetBox != null)
+            {
+                OnBoxUntargeted?.Invoke();
+                currentTargetBox = null;
+            }
+            return;
+        }
+
+        BoxController box = FindTargetBox();
+        
+        if (box != null)
+        {
+            if (currentTargetBox != box.gameObject)
+            {
+                if (currentTargetBox != null) OnBoxUntargeted?.Invoke();
+                currentTargetBox = box.gameObject;
+                OnBoxTargeted?.Invoke(currentTargetBox);
+            }
+            return;
+        }
+        
+        // Si no hay caja enfrente, disparar evento de deselección
+        if (currentTargetBox != null)
+        {
+            OnBoxUntargeted?.Invoke();
+            currentTargetBox = null;
+        }
     }
 
     private void HandleGrabInput()
@@ -58,25 +145,17 @@ public class BoxInteractionController : MonoBehaviour
             return;
         }
         
-        Vector3 rayStart = transform.position + Vector3.up * 0.5f;
-        RaycastHit hit;
+        BoxController box = FindTargetBox();
         
-        if (Physics.Raycast(rayStart, transform.forward, out hit, grabRange, boxLayer))
+        if (box != null)
         {
-            if (hit.collider.TryGetComponent<BoxController>(out var box))
+            carriedBox = box;
+            carriedBox.Grab(grabPoint);
+            
+            // Reducir velocidad al cargar caja
+            if (playerController != null)
             {
-                // No agarrar si ya está en su objetivo
-                if (!box.isOnTarget)
-                {
-                    carriedBox = box;
-                    carriedBox.Grab(grabPoint);
-                    
-                    // Reducir velocidad al cargar caja
-                    if (playerController != null)
-                    {
-                        playerController.SetMovementSpeed(grabSpeedMultiplier);
-                    }
-                }
+                playerController.SetMovementSpeed(grabSpeedMultiplier);
             }
         }
     }
@@ -151,17 +230,7 @@ public class BoxInteractionController : MonoBehaviour
     public bool IsNearBox()
     {
         if (carriedBox != null) return false;
-        
-        Vector3 rayStart = transform.position + Vector3.up * 0.5f;
-        RaycastHit hit;
-        if (Physics.Raycast(rayStart, transform.forward, out hit, grabRange, boxLayer))
-        {
-            if (hit.collider.TryGetComponent<BoxController>(out var box))
-            {
-                return !box.isOnTarget;
-            }
-        }
-        return false;
+        return FindTargetBox() != null;
     }
 
     // Empujar caja cuando el jugador la colisiona
@@ -193,6 +262,27 @@ public class BoxInteractionController : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        // Usamos un color SÓLIDO y llamativo (Cyan) para que no se pierda contra la lava o luces amarillas.
+        Gizmos.color = Color.cyan;
+        
+        Vector3 rayStart = transform.position + Vector3.up * 0.5f;
+        Vector3 rayEnd = rayStart + transform.forward * grabRange;
+
+        // Esfera en la base (jugador)
+        Gizmos.DrawWireSphere(rayStart, grabRadius);
+        
+        // Esfera en la punta (límite de alcance)
+        Gizmos.DrawWireSphere(rayEnd, grabRadius);
+        
+        // Líneas laterales para simular el tubo o cilindro del SphereCast
+        Gizmos.DrawLine(rayStart + transform.up * grabRadius, rayEnd + transform.up * grabRadius);
+        Gizmos.DrawLine(rayStart - transform.up * grabRadius, rayEnd - transform.up * grabRadius);
+        Gizmos.DrawLine(rayStart + transform.right * grabRadius, rayEnd + transform.right * grabRadius);
+        Gizmos.DrawLine(rayStart - transform.right * grabRadius, rayEnd - transform.right * grabRadius);
     }
 }
 
