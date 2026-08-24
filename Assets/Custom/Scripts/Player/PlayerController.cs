@@ -11,11 +11,15 @@ public class PlayerController : MonoBehaviour
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 8f;
     [SerializeField] private float rotationSpeed = 15f;
-    
+
     [Header("Jump & Gravity Settings")]
     [SerializeField] private float jumpForce = 10f;
     [SerializeField] private float gravity = -15f;
     [SerializeField] private float gravityMultiplier = 2.0f;
+
+    [Header("Input")]
+    [Tooltip("InputReader ScriptableObject. Si no se asigna, se busca uno en el proyecto.")]
+    [SerializeField] private InputReader inputReader;
 
     // Componentes
     private CharacterController _characterController;
@@ -25,12 +29,14 @@ public class PlayerController : MonoBehaviour
 
     // Variables de estado
     private Vector3 _verticalVelocity;
-    
+    private Vector2 _moveInput;
+    private bool _jumpQueued;
+
     // Propiedades públicas
     public float MoveSpeed { get => moveSpeed; set => moveSpeed = value; }
     public bool IsGrounded => _characterController != null && _characterController.isGrounded;
     public Vector3 CurrentVelocity => _characterController != null ? _characterController.velocity : Vector3.zero;
-    
+
     private float _originalMoveSpeed;
 
     void Start()
@@ -44,20 +50,50 @@ public class PlayerController : MonoBehaviour
         _boxInteraction = GetComponent<BoxInteractionController>();
         _cameraController = GetComponent<CameraController>();
         _animator = GetComponentInChildren<Animator>();
-        
+
         // Guardar valores originales
         _originalMoveSpeed = moveSpeed;
 
         // Validaciones
         if (_boxInteraction == null) Debug.LogError("PlayerController: No se encontró BoxInteractionController");
         if (_cameraController == null) Debug.LogError("PlayerController: No se encontró CameraController");
+
+        // Buscar InputReader si no está asignado
+        if (inputReader == null)
+        {
+            inputReader = FindAnyObjectByType<InputReader>() as InputReader;
+            if (inputReader == null)
+            {
+                Debug.LogWarning("PlayerController: No se encontró InputReader. El jugador no responderá a input.");
+            }
+        }
+
+        // Suscribirse a eventos de input
+        if (inputReader != null)
+        {
+            inputReader.EnsureEnabled(); // Garantizar input activo
+            inputReader.Move += OnMoveInput;
+            inputReader.JumpStarted += OnJumpInput;
+        }
     }
+
+    void OnDestroy()
+    {
+        if (inputReader != null)
+        {
+            inputReader.Move -= OnMoveInput;
+            inputReader.JumpStarted -= OnJumpInput;
+        }
+    }
+
+    private void OnMoveInput(Vector2 move) => _moveInput = move;
+    private void OnJumpInput() => _jumpQueued = true;
 
     void Update()
     {
         // 1. Obtener la dirección basada en la cámara activa y el input
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        float horizontal = _moveInput.x;
+        float vertical = _moveInput.y;
 
         Vector3 moveDirection = Vector3.zero;
 
@@ -73,7 +109,7 @@ public class PlayerController : MonoBehaviour
         // 3. Manejar interacciones y acciones
         _boxInteraction.HandleBoxPushing(moveDirection);
         HandleJump();
-        
+
         // 4. Aplicar movimiento final
         HandleMovement(moveDirection);
     }
@@ -83,7 +119,7 @@ public class PlayerController : MonoBehaviour
         if (_characterController.isGrounded && _verticalVelocity.y < 0)
         {
             // Pequeño valor negativo consistente par asegurar que el CharacterController permanezca atado al suelo
-            _verticalVelocity.y = -2f; 
+            _verticalVelocity.y = -2f;
         }
 
         // Aplicar fuerza de gravedad
@@ -124,10 +160,11 @@ public class PlayerController : MonoBehaviour
     private void HandleJump()
     {
         // Saltar solo si está en el suelo y no está cargando una caja
-        if (Input.GetButtonDown("Jump") && _characterController.isGrounded && !_boxInteraction.IsCarryingBox)
+        if (_jumpQueued && _characterController.isGrounded && !_boxInteraction.IsCarryingBox)
         {
             _verticalVelocity.y = jumpForce;
         }
+        _jumpQueued = false;
     }
 
     // Métodos públicos para modificadores externos
@@ -140,7 +177,7 @@ public class PlayerController : MonoBehaviour
     {
         moveSpeed = _originalMoveSpeed;
     }
-    
+
     public void ApplyKnockback(Vector3 direction, float force)
     {
         // Empuje vertical y horizontal ignorando interpolaciones

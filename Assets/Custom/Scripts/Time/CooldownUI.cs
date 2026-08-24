@@ -51,15 +51,17 @@ public class CooldownUI : MonoBehaviour
 
         if (timeManager.IsActive)
         {
-            float n = Mathf.InverseLerp(timeManager.Duration, 0f, timeManager.RemainingDuration);
-            fill.fillAmount = Mathf.Clamp01(n); // de 1→0, si quieres invertido usa 1-n
+            fill.fillAmount = timeManager.Duration > 0f
+                ? Mathf.Clamp01(timeManager.RemainingDuration / timeManager.Duration)
+                : 0f;
             fill.color = activeColor;
             if (label) label.text = $"¡PODER! {timeManager.RemainingDuration:0.0}s";
         }
         else if (timeManager.IsCoolingDown)
         {
-            float n = 1f - Mathf.InverseLerp(timeManager.Cooldown, 0f, timeManager.RemainingCooldown);
-            fill.fillAmount = Mathf.Clamp01(n); // 0→1 durante cooldown
+            fill.fillAmount = timeManager.Cooldown > 0f
+                ? 1f - Mathf.Clamp01(timeManager.RemainingCooldown / timeManager.Cooldown)
+                : 1f;
             fill.color = cooldownColor;
             if (label) label.text = $"{timeManager.RemainingCooldown:0.0}s";
         }
@@ -67,7 +69,7 @@ public class CooldownUI : MonoBehaviour
         {
             fill.fillAmount = 1f;
             fill.color = readyColor;
-            if (label) label.text = "READY (E)";
+            if (label) label.text = "READY (Q)";
         }
     }
 

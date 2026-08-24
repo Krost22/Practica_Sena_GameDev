@@ -21,8 +21,8 @@ public class LocalTimeManager : MonoBehaviour
     [Tooltip("Cooldown antes de poder usarlo otra vez (segundos).")]
     [Min(0f)] [SerializeField] private float cooldown = 5f;
 
-    [Header("Entrada")]
-    [SerializeField] private KeyCode activationKey = KeyCode.E;
+    [Header("Input")]
+    [SerializeField] private InputReader inputReader;
 
     private readonly HashSet<ITimeScalable> targets = new();
     private bool isActive;
@@ -35,6 +35,7 @@ public class LocalTimeManager : MonoBehaviour
 
     public bool IsActive => isActive;
     public bool IsCoolingDown => isCoolingDown;
+    public bool CanActivate => !isActive && !isCoolingDown;
     public float RemainingDuration { get; private set; }
     public float RemainingCooldown { get; private set; }
     public float Duration => duration;
@@ -46,12 +47,51 @@ public class LocalTimeManager : MonoBehaviour
         RefreshTargets();
     }
 
-    void Update()
+    void Start()
     {
-        if (Input.GetKeyDown(activationKey) && !isActive && !isCoolingDown)
+        if (inputReader == null)
+        {
+            inputReader = FindAnyObjectByType<InputReader>() as InputReader;
+        }
+        if (inputReader != null)
+        {
+            inputReader.SlowMoStarted += OnSlowMoInput;
+        }
+        else
+        {
+            Debug.LogWarning("LocalTimeManager: No se encontró InputReader. Slow-mo no funcionará.");
+        }
+    }
+
+    void OnDestroy()
+    {
+        StopAllCoroutines();
+        if (isActive)
+        {
+            ResetSlow();
+        }
+        isActive = false;
+        isCoolingDown = false;
+        RemainingDuration = 0f;
+        RemainingCooldown = 0f;
+
+        if (inputReader != null)
+        {
+            inputReader.SlowMoStarted -= OnSlowMoInput;
+        }
+    }
+
+    private void OnSlowMoInput()
+    {
+        if (CanActivate)
         {
             StartCoroutine(SlowRoutine());
         }
+    }
+
+    private bool IsTimerSuspended()
+    {
+        return GameManager.Instance != null && GameManager.Instance.State != GameManager.GameState.Playing;
     }
 
     /// <summary> Escanea los GameObjects asignados y registra todos los ITimeScalable en sus hijos. </summary>
@@ -71,7 +111,7 @@ public class LocalTimeManager : MonoBehaviour
         }
     }
 
-      private IEnumerator SlowRoutine()
+    private IEnumerator SlowRoutine()
     {
         isActive = true;
         RemainingDuration = duration;
@@ -80,7 +120,10 @@ public class LocalTimeManager : MonoBehaviour
 
         while (RemainingDuration > 0f)
         {
-            RemainingDuration -= Time.unscaledDeltaTime;
+            if (!IsTimerSuspended())
+            {
+                RemainingDuration = Mathf.Max(0f, RemainingDuration - Time.unscaledDeltaTime);
+            }
             yield return null;
         }
 
@@ -96,7 +139,10 @@ public class LocalTimeManager : MonoBehaviour
 
             while (RemainingCooldown > 0f)
             {
-                RemainingCooldown -= Time.unscaledDeltaTime;
+                if (!IsTimerSuspended())
+                {
+                    RemainingCooldown = Mathf.Max(0f, RemainingCooldown - Time.unscaledDeltaTime);
+                }
                 yield return null;
             }
 
@@ -107,14 +153,24 @@ public class LocalTimeManager : MonoBehaviour
 
     public void ApplySlow(float scale)
     {
-        foreach (var t in targets)
-            t.SetTimeScale(scale);
+        scale = Mathf.Clamp01(scale);
+        foreach (var target in targets)
+        {
+            if (IsTargetAlive(target)) target.SetTimeScale(scale);
+        }
     }
 
     public void ResetSlow()
     {
-        foreach (var t in targets)
-            t.SetTimeScale(1f);
+        foreach (var target in targets)
+        {
+            if (IsTargetAlive(target)) target.SetTimeScale(1f);
+        }
+    }
+
+    private static bool IsTargetAlive(ITimeScalable target)
+    {
+        return target != null && (!(target is UnityEngine.Object unityObject) || unityObject != null);
     }
 
     

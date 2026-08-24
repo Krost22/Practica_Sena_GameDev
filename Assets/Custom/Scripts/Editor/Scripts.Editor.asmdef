@@ -1,0 +1,12 @@
+{
+    "name": "Scripts.Editor",
+    "references": [
+        "Scripts",
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ]
+}

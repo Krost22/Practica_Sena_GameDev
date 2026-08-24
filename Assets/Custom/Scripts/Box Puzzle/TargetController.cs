@@ -1,12 +1,16 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(Collider))]
 public class TargetController : MonoBehaviour
 {
     [Header("Configuración")]
-    public BoxController correctBox; 
+    public BoxController correctBox;
     public Material inactiveMaterial;
     public Material activeMaterial;
+
+    [Header("Configuración")]
+    [SerializeField] private bool debugMode = false;
 
     [Header("Estado (Solo lectura)")]
     public bool isOccupied;
@@ -14,15 +18,18 @@ public class TargetController : MonoBehaviour
     private MeshRenderer meshRenderer;
     private PuzzleManager puzzleManager;
 
+    [Header("Eventos")]
+    public UnityEvent OnOccupied;
+
     void Start()
     {
         // Nos aseguramos automáticamente que sirva para OnTrigger
         Collider col = GetComponent<Collider>();
-        if (col != null) col.isTrigger = true; 
+        if (col != null) col.isTrigger = true;
 
         meshRenderer = GetComponent<MeshRenderer>();
-        puzzleManager = FindFirstObjectByType<PuzzleManager>(); // Compatible y optimizado para Unity 6
-        
+        puzzleManager = FindAnyObjectByType<PuzzleManager>(); // Unity 6 optimizado
+
         UpdateVisual();
     }
 
@@ -34,8 +41,8 @@ public class TargetController : MonoBehaviour
         }
     }
 
-    // TriggerStay maneja eventos perfectos (sin ciclos sueltos y sin checkear Vector3.Distance global)
-    private void OnTriggerStay(Collider other)
+    // OnTriggerEnter: el path principal de snap (más eficiente que OnTriggerStay)
+    private void OnTriggerEnter(Collider other)
     {
         if (isOccupied) return;
 
@@ -44,12 +51,16 @@ public class TargetController : MonoBehaviour
             // Solo hace 'snap' si validamos la caja, y si el jugador NO la tiene en su mano
             if (box == correctBox && !box.isGrabbed)
             {
-                Debug.Log($"[{gameObject.name}] Detectó su caja correcta. Haciendo Snap y verificando Puzzle.");
+                if (debugMode)
+                {
+                    Debug.Log($"[{gameObject.name}] Detectó su caja correcta. Haciendo Snap y verificando Puzzle.");
+                }
                 isOccupied = true;
                 UpdateVisual();
-                
+                OnOccupied.Invoke();
+
                 box.PlaceOnTarget(transform);
-                
+
                 // Dispara inteligentemente el check solo cuando se ejecuta la colocación
                 if (puzzleManager != null)
                 {
@@ -58,6 +69,29 @@ public class TargetController : MonoBehaviour
                 else
                 {
                     Debug.LogError("¡El puzzleManager es null dentro del TargetController! No se le puede avisar de la victoria.");
+                }
+            }
+        }
+    }
+
+    // OnTriggerStay: fallback por si OnTriggerEnter no captura (caja que cae encima, etc.)
+    private void OnTriggerStay(Collider other)
+    {
+        if (isOccupied) return;
+
+        if (other.TryGetComponent(out BoxController box))
+        {
+            if (box == correctBox && !box.isGrabbed)
+            {
+                isOccupied = true;
+                UpdateVisual();
+                OnOccupied.Invoke();
+
+                box.PlaceOnTarget(transform);
+
+                if (puzzleManager != null)
+                {
+                    puzzleManager.CheckPuzzleState();
                 }
             }
         }
@@ -74,7 +108,7 @@ public class TargetController : MonoBehaviour
                 // Si la caja es retirada de su objetivo
                 isOccupied = false;
                 UpdateVisual();
-                
+
                 if (puzzleManager != null)
                     puzzleManager.CheckPuzzleState();
             }

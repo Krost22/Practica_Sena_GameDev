@@ -9,7 +9,9 @@ public class CameraManager : MonoBehaviour
     
     [Header("Configuración")]
     [SerializeField] private bool debugMode = true;
-    [SerializeField] private KeyCode debugKey = KeyCode.T; // Tecla para mostrar info de triggers
+
+    [Header("Input")]
+    [SerializeField] private InputReader inputReader;
     
     [Header("Cámara Inicial")]
     [SerializeField] private Camera initialCamera; // Cámara que será activa al inicio
@@ -40,52 +42,71 @@ public class CameraManager : MonoBehaviour
     {
         RefreshCameraTriggers();
         SetupInitialCamera();
+
+        if (inputReader == null)
+        {
+            inputReader = FindAnyObjectByType<InputReader>() as InputReader;
+        }
     }
-    
+
     void Update()
     {
-        if (Input.GetKeyDown(debugKey) && debugMode)
-        {
-            ShowTriggersInfo();
-        }
+        // Debug de triggers se movió a un menú contextual para no depender de tecla fija
+        // (anteriormente Input.GetKeyDown(debugKey))
     }
     
     [ContextMenu("Actualizar Lista de Triggers")]
     public void RefreshCameraTriggers()
     {
         cameraTriggers.Clear();
-        
-        // Buscar todos los CameraTrigger en la escena
-        CameraTrigger[] allTriggers = Object.FindObjectsByType<CameraTrigger>(FindObjectsSortMode.None);
-        
+
+        // Buscar todos los CameraTrigger en la escena (Unity 6 API sin FindObjectsSortMode)
+        CameraTrigger[] allTriggers = Object.FindObjectsByType<CameraTrigger>(FindObjectsInactive.Exclude);
+
         foreach (CameraTrigger trigger in allTriggers)
         {
-            // Obtener la cámara asignada al trigger
-            Camera assignedCamera = GetTriggerCamera(trigger);
-            
+            // Obtener la cámara asignada al trigger usando el getter público (sin reflexión)
+            Camera assignedCamera = trigger.TargetCamera;
+
             CameraTriggerData data = new CameraTriggerData(
                 trigger.gameObject.name,
                 trigger,
                 assignedCamera
             );
-            
+
             cameraTriggers.Add(data);
-            
+
+            // Suscribirse al evento de activación para notificar al CameraController
+            trigger.OnCameraActivated.RemoveListener(OnTriggerCameraActivated);
+            trigger.OnCameraActivated.AddListener(OnTriggerCameraActivated);
+
             if (debugMode)
             {
                 Debug.Log($"Trigger encontrado: {trigger.gameObject.name} -> {data.assignedCamera?.name ?? "Sin cámara"}");
             }
         }
-        
+
         Debug.Log($"Se encontraron {cameraTriggers.Count} triggers de cámara en la escena.");
     }
-    
+
+    // Notificar al CameraController del player cuál es la cámara activa
+    private void OnTriggerCameraActivated(Camera activatedCamera)
+    {
+        if (activatedCamera == null) return;
+
+        // Buscar el CameraController del player y asignarle la cámara directamente
+        // (evita que CameraController busque todas las cámaras cada frame)
+        CameraController[] controllers = FindObjectsByType<CameraController>(FindObjectsInactive.Exclude);
+        foreach (var cc in controllers)
+        {
+            cc.SetPlayerCamera(activatedCamera);
+        }
+    }
+
     private Camera GetTriggerCamera(CameraTrigger trigger)
     {
-        // Usar reflexión para acceder al campo privado targetCamera
-        var field = typeof(CameraTrigger).GetField("targetCamera", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        return field?.GetValue(trigger) as Camera;
+        // Usar el getter público (sin reflexión)
+        return trigger.TargetCamera;
     }
     
     public void ShowTriggersInfo()
@@ -221,13 +242,14 @@ public class CameraManager : MonoBehaviour
     
     private void DeactivateAllCameras()
     {
-        Camera[] allCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
-        foreach (Camera cam in allCameras)
+        // Desactivar SOLO las cámaras gestionadas por triggers (no todas las de la escena)
+        // Esto evita desactivar cámaras de UI, menú, etc.
+        foreach (var triggerData in cameraTriggers)
         {
-            if (cam != null)
+            if (triggerData.assignedCamera != null)
             {
-                cam.gameObject.SetActive(false);
-                cam.enabled = false;
+                triggerData.assignedCamera.gameObject.SetActive(false);
+                triggerData.assignedCamera.enabled = false;
             }
         }
     }

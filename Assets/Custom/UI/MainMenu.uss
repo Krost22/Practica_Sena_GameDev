@@ -1,0 +1,654 @@
+/* === MainMenu.uss — Tema mazmorra + libro de capítulos === */
+/* Unity 6 UI Toolkit Runtime — solo propiedades soportadas            */
+
+/* === Variables === */
+:root {
+    --color-bg-dark: #0a0806;
+    --color-bg-darker: #050302;
+    --color-parchment: #d4c5a0;
+    --color-parchment-dark: #b8a880;
+    --color-parchment-edge: #8a7a55;
+    --color-wax: #8b1a1a;
+    --color-wax-dark: #5c0e0e;
+    --color-gold: #c9a84c;
+    --color-gold-bright: #e0c060;
+    --color-text-light: #e8dcc0;
+    --color-text-dark: #2a1f10;
+    --color-button-bg: #1a1410;
+    --color-button-hover: #2a2018;
+    --color-button-border: #4a3a25;
+    --color-primary: #c9a84c;
+    --color-danger: #8b2a2a;
+    --color-focus-outline: rgba(201, 168, 76, 0.6);
+}
+
+/* === Root === */
+.root {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(5, 3, 2, 0);
+    position: absolute;
+}
+
+/* === Fondo === */
+.background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(5, 3, 2, 0.45);
+}
+
+/* === Paneles con transicion suave === */
+.panel {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.25s ease-in-out;
+}
+
+.center-panel {
+    flex-direction: column;
+    padding: 40px;
+}
+
+.main-menu-panel {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 8%;
+    padding-top: 56px;
+    padding-bottom: 56px;
+}
+
+.main-menu-shell {
+    width: 650px;
+    min-height: 720px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 58px;
+    background-color: rgba(7, 5, 3, 0.9);
+    border-left-width: 4px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-color: rgba(201, 168, 76, 0.7);
+}
+
+.cinematic-bar {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background-color: rgba(0, 0, 0, 0.9);
+}
+
+.cinematic-bar-top {
+    top: 0;
+}
+
+.cinematic-bar-bottom {
+    bottom: 0;
+}
+
+.title-ornament,
+.title-divider {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+}
+
+.title-ornament {
+    margin-bottom: 22px;
+}
+
+.ornament-line,
+.divider-line {
+    flex-grow: 1;
+    height: 1px;
+    background-color: var(--color-gold);
+    opacity: 0.55;
+}
+
+.title-eyebrow {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: var(--color-gold);
+    margin-left: 14px;
+    margin-right: 14px;
+    -unity-text-align: middle-center;
+}
+
+/* Clase hidden: fade-out */
+.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* === Titulos === */
+.game-title {
+    width: 100%;
+    font-size: 80px;
+    -unity-font-style: bold;
+    color: var(--color-text-light);
+    margin: 0;
+    -unity-text-align: upper-left;
+}
+
+.game-title-top {
+    color: var(--color-gold);
+    margin-bottom: -18px;
+}
+
+.game-title-bottom {
+    margin-bottom: 10px;
+}
+
+.game-subtitle {
+    width: 100%;
+    font-size: 20px;
+    color: var(--color-gold-bright);
+    opacity: 0.9;
+    margin-bottom: 20px;
+    -unity-font-style: italic;
+    -unity-text-align: upper-left;
+}
+
+.divider-gem {
+    font-size: 16px;
+    color: var(--color-gold);
+    margin-left: 12px;
+    margin-right: 12px;
+}
+
+.menu-description {
+    width: 100%;
+    font-size: 18px;
+    color: var(--color-text-light);
+    opacity: 0.75;
+    white-space: normal;
+    margin-top: 22px;
+    margin-bottom: 8px;
+}
+
+.controls-hint {
+    width: 100%;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--color-text-light);
+    opacity: 0.4;
+    -unity-text-align: middle-center;
+}
+
+.panel-title {
+    font-size: 48px;
+    -unity-font-style: bold;
+    color: var(--color-gold);
+    margin-bottom: 40px;
+    -unity-text-align: upper-center;
+}
+
+/* === Botones === */
+.button-group {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: 28px;
+}
+
+.menu-button {
+    min-width: 280px;
+    height: 58px;
+    font-size: 20px;
+    color: var(--color-text-light);
+    background-color: var(--color-button-bg);
+    border-color: var(--color-button-border);
+    border-width: 2px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    transition: background-color 0.15s ease;
+}
+
+.menu-button:hover {
+    background-color: var(--color-button-hover);
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+}
+
+.menu-button:active {
+    background-color: var(--color-gold);
+    color: var(--color-bg-dark);
+}
+
+/* Focus outline para accesibilidad con teclado */
+.menu-button:focus {
+    border-color: var(--color-gold-bright);
+    border-width: 3px;
+}
+
+.menu-button:focus:hover {
+    background-color: var(--color-button-hover);
+}
+
+.primary-button {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.primary-button:hover {
+    background-color: rgba(201, 168, 76, 0.15);
+}
+
+.danger-button {
+    border-color: var(--color-danger);
+    color: #c44a4a;
+}
+
+.danger-button:hover {
+    background-color: rgba(139, 42, 42, 0.2);
+    border-color: #c44a4a;
+    color: #e55a5a;
+}
+
+.small-button {
+    min-width: 200px;
+    height: 40px;
+    font-size: 16px;
+}
+
+.back-button {
+    margin-top: 30px;
+    min-width: 180px;
+    height: 45px;
+    font-size: 18px;
+    opacity: 0.8;
+}
+
+.back-button:hover {
+    opacity: 1;
+}
+
+.main-menu-panel .menu-button {
+    width: 100%;
+    min-width: 0;
+    -unity-text-align: middle-left;
+    padding-left: 28px;
+}
+
+.root.compact .main-menu-panel {
+    justify-content: center;
+    padding: 32px;
+}
+
+.root.compact .main-menu-shell {
+    width: 92%;
+    max-width: 650px;
+    min-height: 0;
+    padding: 34px 42px;
+}
+
+.root.compact .game-title {
+    font-size: 68px;
+}
+
+.root.compact .game-title-top {
+    margin-bottom: -12px;
+}
+
+.root.compact .game-subtitle {
+    font-size: 17px;
+}
+
+.root.compact .menu-description {
+    font-size: 15px;
+}
+
+.root.compact .menu-button {
+    height: 52px;
+    font-size: 18px;
+}
+
+.root.short .main-menu-shell {
+    min-height: 0;
+    padding-top: 26px;
+    padding-bottom: 26px;
+}
+
+.root.short .title-ornament {
+    margin-bottom: 12px;
+}
+
+.root.short .game-title {
+    font-size: 64px;
+}
+
+.root.short .menu-description {
+    margin-top: 12px;
+}
+
+.root.short .button-group {
+    padding-top: 16px;
+}
+
+.root.short .controls-hint {
+    margin-top: 8px;
+}
+
+/* === Libro de Capitulos === */
+.book-panel {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Contenedor del libro con lomo central */
+.book-container {
+    flex-direction: row;
+    width: 900px;
+    height: 500px;
+    background-color: var(--color-parchment-dark);
+    border-color: var(--color-parchment-edge);
+    border-width: 3px;
+    border-radius: 2px;
+}
+
+/* Lomo del libro (decorativo) */
+.book-spine {
+    width: 12px;
+    background-color: var(--color-parchment-edge);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-left-color: rgba(0, 0, 0, 0.3);
+    border-right-color: rgba(0, 0, 0, 0.3);
+}
+
+.page {
+    flex: 1;
+    background-color: var(--color-parchment);
+    padding: 30px 35px;
+    border-color: var(--color-parchment-edge);
+}
+
+.page-left {
+    border-right-width: 0;
+}
+
+.page-right {
+    border-left-width: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+/* === Contenido de pagina izquierda === */
+.level-number {
+    font-size: 18px;
+    color: var(--color-text-dark);
+    opacity: 0.6;
+    -unity-font-style: bold;
+    margin-bottom: 10px;
+}
+
+.level-name {
+    font-size: 36px;
+    -unity-font-style: bold;
+    color: var(--color-text-dark);
+    margin-bottom: 20px;
+    transition: color 0.2s ease;
+}
+
+.level-description {
+    font-size: 16px;
+    color: var(--color-text-dark);
+    opacity: 0.8;
+    white-space: normal;
+    margin-bottom: 30px;
+}
+
+.level-status-row {
+    flex-direction: row;
+    align-items: center;
+    margin-top: auto;
+}
+
+.status-icon {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: var(--color-gold);
+    margin-right: 10px;
+}
+
+.status-text {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: var(--color-text-dark);
+    opacity: 0.7;
+}
+
+/* === Contenido de pagina derecha === */
+.level-preview {
+    width: 300px;
+    height: 200px;
+    background-color: rgba(42, 31, 16, 0.3);
+    border-color: var(--color-parchment-edge);
+    border-width: 2px;
+    border-radius: 4px;
+    margin-bottom: 30px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* === Sello de cera === */
+.wax-seal {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: var(--color-wax);
+    border-color: var(--color-wax-dark);
+    border-width: 4px;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+}
+
+.wax-seal-icon {
+    font-size: 48px;
+    -unity-font-style: bold;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.wax-seal.hidden {
+    display: none;
+}
+
+/* === Boton Entrar === */
+.enter-button {
+    min-width: 200px;
+    height: 50px;
+    font-size: 20px;
+    -unity-font-style: bold;
+    background-color: rgba(201, 168, 76, 0.2);
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+}
+
+.enter-button:hover {
+    background-color: rgba(201, 168, 76, 0.4);
+    color: var(--color-gold-bright);
+}
+
+.enter-button:disabled {
+    opacity: 0.3;
+}
+
+/* === Navegacion del libro === */
+.book-nav {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.nav-button {
+    min-width: 50px;
+    height: 50px;
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: var(--color-text-light);
+    background-color: var(--color-button-bg);
+    border-color: var(--color-button-border);
+    border-width: 2px;
+    border-radius: 4px;
+    margin-left: 5px;
+    margin-right: 5px;
+    transition: background-color 0.15s ease;
+}
+
+.nav-button:hover {
+    background-color: var(--color-button-hover);
+    border-color: var(--color-gold);
+    color: var(--color-gold);
+}
+
+.nav-button:active {
+}
+
+.nav-button:focus {
+    border-color: var(--color-gold-bright);
+    border-width: 3px;
+}
+
+.nav-button:disabled {
+    opacity: 0.3;
+}
+
+.page-indicator {
+    font-size: 18px;
+    color: var(--color-text-light);
+    opacity: 0.7;
+    min-width: 180px;
+    -unity-text-align: middle-center;
+}
+
+/* === Panel de opciones === */
+.slider-group {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 400px;
+    margin-bottom: 20px;
+}
+
+.slider-label {
+    font-size: 18px;
+    color: var(--color-text-light);
+    min-width: 180px;
+}
+
+.menu-slider {
+    min-width: 200px;
+    flex: 1;
+    margin-left: 20px;
+}
+
+.menu-slider:focus {
+    border-color: var(--color-gold);
+    border-width: 2px;
+}
+
+/* === Estados de pagina bloqueada === */
+.level-name.locked {
+    color: rgba(42, 31, 16, 0.5);
+}
+
+.level-description.locked {
+    color: rgba(42, 31, 16, 0.4);
+    -unity-font-style: italic;
+}
+
+/* === Estado completado === */
+.level-name.completed {
+    color: var(--color-gold);
+}
+
+.status-icon.completed {
+    color: var(--color-gold);
+}
+
+/* === Animacion de flip de pagina === */
+.page-flip-animation {
+    transition: opacity 0.15s ease-in-out;
+    opacity: 0;
+}
+
+/* === Footer === */
+.footer-label {
+    font-size: 12px;
+    color: var(--color-text-light);
+    opacity: 0.3;
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+}
+
+/* === Dialogo de confirmacion === */
+.modal-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.modal-dialog {
+    background-color: var(--color-button-bg);
+    border-color: var(--color-danger);
+    border-width: 3px;
+    border-radius: 8px;
+    padding: 30px 40px;
+    align-items: center;
+    min-width: 400px;
+}
+
+.modal-title {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: #e55a5a;
+    margin-bottom: 15px;
+    -unity-text-align: upper-center;
+}
+
+.modal-message {
+    font-size: 16px;
+    color: var(--color-text-light);
+    margin-bottom: 25px;
+    -unity-text-align: upper-center;
+    white-space: normal;
+}
+
+.modal-buttons {
+    flex-direction: row;
+    justify-content: center;
+}
+
+.modal-buttons .menu-button {
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-bottom: 0;
+}

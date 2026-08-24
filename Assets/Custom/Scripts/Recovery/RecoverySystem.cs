@@ -8,17 +8,31 @@ public class RecoverySystem : MonoBehaviour
     [SerializeField] private AudioSource RecoveryAudio;
     [SerializeField] private GameObject recoveryPlayer;
     [SerializeField] private GameObject recoveryKeyitem;
+
+    [Header("Penalización")]
+    [SerializeField] private bool loseLifeOnRecovery = true;
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
+            // Penalización: perder una vida al caer (si PlayerHealth está presente)
+            if (loseLifeOnRecovery)
+            {
+                PlayerHealth health = player.GetComponent<PlayerHealth>();
+                if (health != null)
+                {
+                    health.TakeDamage();
+                }
+            }
+
             // Para teletransportar un objeto con CharacterController, primero hay que apagarlo
             CharacterController cc = player.GetComponent<CharacterController>();
             if (cc != null) cc.enabled = false;
-            
+
             // Se asinga la nueva posición
             player.transform.position = recoveryPlayer.transform.position;
-            
+
             // Se vuelve a encender
             if (cc != null) cc.enabled = true;
 
@@ -37,7 +51,7 @@ public class RecoverySystem : MonoBehaviour
         {
             RecoveryEffect.Play();
         }
-        
+
         if (RecoveryAudio != null)
         {
             // Genera un pitch aleatorio entre 1.30 y 2.0
@@ -45,5 +59,5 @@ public class RecoverySystem : MonoBehaviour
             RecoveryAudio.Play();
         }
     }
-    
+
 }

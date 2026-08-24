@@ -7,12 +7,14 @@ public class BoxInteractionController : MonoBehaviour
     [SerializeField] private float pushForce = 3f;
 
     [Header("Grab Settings")]
-    [SerializeField] private KeyCode grabKey = KeyCode.E;
     [SerializeField] private float grabRange = 3.5f; // Mayor rango de distancia
     [SerializeField] private float grabRadius = 0.75f; // Radio para facilitar apuntar a la caja
     [SerializeField] private float grabSpeedMultiplier = 0.7f;
     [SerializeField] private LayerMask boxLayer;
     [SerializeField] private Transform grabPoint; // Punto donde se sostiene la caja
+
+    [Header("Input")]
+    [SerializeField] private InputReader inputReader;
 
     [Header("Events")]
     public UnityEvent<GameObject> OnBoxTargeted;
@@ -34,12 +36,49 @@ public class BoxInteractionController : MonoBehaviour
         {
             Debug.LogError("BoxInteractionController: No se encontró PlayerController en el GameObject");
         }
+
+        // Buscar InputReader si no está asignado (compartir el del PlayerController)
+        if (inputReader == null && playerController != null)
+        {
+            // Intentar obtenerlo vía reflexión del campo privado (compatibilidad)
+            var field = typeof(PlayerController).GetField("inputReader",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            inputReader = field?.GetValue(playerController) as InputReader;
+        }
+
+        if (inputReader != null)
+        {
+            inputReader.InteractStarted += OnInteractStarted;
+        }
+        else
+        {
+            Debug.LogWarning("BoxInteractionController: No se encontró InputReader. No se podrá agarrar cajas.");
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (inputReader != null)
+        {
+            inputReader.InteractStarted -= OnInteractStarted;
+        }
+    }
+
+    private void OnInteractStarted()
+    {
+        if (carriedBox == null)
+        {
+            TryGrabBox();
+        }
+        else
+        {
+            ReleaseBox(false);
+        }
     }
 
     void Update()
     {
         CheckTargetBox();
-        HandleGrabInput();
         UpdateCarriedBoxPosition();
     }
 
@@ -118,21 +157,6 @@ public class BoxInteractionController : MonoBehaviour
         {
             OnBoxUntargeted?.Invoke();
             currentTargetBox = null;
-        }
-    }
-
-    private void HandleGrabInput()
-    {
-        if (Input.GetKeyDown(grabKey))
-        {
-            if (carriedBox == null)
-            {
-                TryGrabBox();
-            }
-            else
-            {
-                ReleaseBox(false);
-            }
         }
     }
 

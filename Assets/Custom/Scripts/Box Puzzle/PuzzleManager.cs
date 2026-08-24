@@ -19,13 +19,32 @@ public class PuzzleManager : MonoBehaviour
     
     private bool puzzleComplete = false;
 
+    [Header("Configuración")]
+    [SerializeField] private bool debugMode = false;
+
+    [Header("Progresión")]
+    [Tooltip("ID del puzzle para LevelProgression. Dejar vacío si no se usa LevelProgression.")]
+    [SerializeField] private string puzzleId = "BoxPuzzle";
+    [SerializeField] private LevelProgression levelProgression;
+
+    void Start()
+    {
+        if (levelProgression == null)
+        {
+            levelProgression = FindAnyObjectByType<LevelProgression>();
+        }
+    }
+
     // Se eliminó la ineficiencia del Update() y Corrutinas.
     // Ahora es un método ligero    // Método disparado por TargetController de forma eficiente
     public void CheckPuzzleState()
     {
         bool allOccupied = true;
-        
-        Debug.Log($"Revisando Puzzle: Hay {targets.Count} bases objetivo en la lista del PuzzleManager.");
+
+        if (debugMode)
+        {
+            Debug.Log($"Revisando Puzzle: Hay {targets.Count} bases objetivo en la lista del PuzzleManager.");
+        }
 
         for (int i = 0; i < targets.Count; i++)
         {
@@ -38,26 +57,41 @@ public class PuzzleManager : MonoBehaviour
 
             if (!target.isOccupied)
             {
-                Debug.Log($"El Target {target.gameObject.name} aún NO está ocupado.");
+                if (debugMode)
+                {
+                    Debug.Log($"El Target {target.gameObject.name} aún NO está ocupado.");
+                }
                 allOccupied = false;
                 break; // Hay un objetivo libre, salimos
             }
         }
-        
+
         if (allOccupied && !puzzleComplete)
         {
             puzzleComplete = true;
             Debug.Log("¡TODOS LOS OBJETIVOS LLENOS! Puzzle Completado. Abriendo la puerta.");
-            
+
             HandleDoorStatus(true);
             OnPuzzleComplete?.Invoke(); // Llama a cualquier cosa en el inspector
+
+            // Notificar al LevelProgression
+            if (levelProgression != null && !string.IsNullOrEmpty(puzzleId))
+            {
+                levelProgression.RegisterPuzzleComplete(puzzleId);
+            }
         }
         else if (!allOccupied && puzzleComplete)
         {
             puzzleComplete = false;
-            
+
             HandleDoorStatus(false);
             OnPuzzleIncomplete?.Invoke();
+
+            // Notificar al LevelProgression
+            if (levelProgression != null && !string.IsNullOrEmpty(puzzleId))
+            {
+                levelProgression.RegisterPuzzleIncomplete(puzzleId);
+            }
         }
     }
 

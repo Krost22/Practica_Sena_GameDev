@@ -10,6 +10,9 @@ public class SpawnButton : MonoBehaviour
     [Header("Configuración del Botón")]
     [SerializeField] private float cooldownTime = 1f; // Tiempo de espera entre activaciones
     [SerializeField] private string triggerTag = "ButtonTrigger"; // Tag del trigger que activa el botón
+
+    [Header("Configuración")]
+    [SerializeField] private bool debugMode = false;
     
     private ConfigurableJoint buttonJoint;
     private GameObject currentSpawnedObject;
@@ -110,8 +113,11 @@ public class SpawnButton : MonoBehaviour
         
         // Programar la destrucción del objeto después del tiempo especificado
         Destroy(currentSpawnedObject, objectLifetime);
-        
-        Debug.Log($"SpawnButton: Objeto spawneado en posición {spawnPosition}");
+
+        if (debugMode)
+        {
+            Debug.Log($"SpawnButton: Objeto spawneado en posición {spawnPosition}");
+        }
     }
     
     private System.Collections.IEnumerator CooldownCoroutine()

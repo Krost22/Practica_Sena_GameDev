@@ -1,0 +1,119 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="MainMenu.uss" />
+
+    <ui:VisualElement name="app-root" class="root">
+        <!-- Fondo oscuro de mazmorra con vignette -->
+        <ui:VisualElement class="background" />
+
+        <!-- ===== PANEL PRINCIPAL ===== -->
+        <ui:VisualElement name="main-menu-panel" class="panel main-menu-panel">
+            <ui:VisualElement class="cinematic-bar cinematic-bar-top" />
+            <ui:VisualElement class="main-menu-shell">
+                <ui:VisualElement class="title-ornament">
+                    <ui:VisualElement class="ornament-line" />
+                    <ui:Label text="CRÓNICAS DE LAS CÁMARAS" class="title-eyebrow" />
+                    <ui:VisualElement class="ornament-line" />
+                </ui:VisualElement>
+                <ui:Label text="THE ETERNAL" class="game-title game-title-top" />
+                <ui:Label text="CHRONOGEM" class="game-title game-title-bottom" />
+                <ui:Label text="LAS CÁMARAS OLVIDADAS" class="game-subtitle" />
+                <ui:VisualElement class="title-divider">
+                    <ui:VisualElement class="divider-line" />
+                    <ui:Label text="◆" class="divider-gem" />
+                    <ui:VisualElement class="divider-line" />
+                </ui:VisualElement>
+                <ui:Label text="Cada cámara guarda un secreto. Cada capítulo, una salida." class="menu-description" />
+
+                <ui:VisualElement class="button-group">
+                    <ui:Button text="ABRIR EL LIBRO" name="btn-play" class="menu-button primary-button" tooltip="Abrir el libro de capitulos para seleccionar un nivel" />
+                    <ui:Button text="OPCIONES" name="btn-options" class="menu-button" tooltip="Ajustar volumen y progreso" />
+                    <ui:Button text="SALIR" name="btn-quit" class="menu-button danger-button" tooltip="Salir del juego" />
+                </ui:VisualElement>
+                <ui:Label text="ENTER  Seleccionar    •    ESC  Volver" class="controls-hint" />
+            </ui:VisualElement>
+            <ui:VisualElement class="cinematic-bar cinematic-bar-bottom" />
+        </ui:VisualElement>
+
+        <!-- ===== LIBRO DE CAPITULOS (Selector de niveles) ===== -->
+        <ui:VisualElement name="book-panel" class="panel book-panel hidden">
+            <!-- Contenedor del libro con lomo central -->
+            <ui:VisualElement class="book-container">
+                <!-- Pagina izquierda: info del nivel -->
+                <ui:VisualElement class="page page-left">
+                    <ui:Label text="CAPITULO" name="level-number" class="level-number" />
+                    <ui:Label text="Nombre del Nivel" name="level-name" class="level-name" />
+                    <ui:Label text="Descripcion del nivel aqui." name="level-description" class="level-description" />
+                    <ui:VisualElement class="level-status-row">
+                        <ui:Label text="" name="level-status-icon" class="status-icon" />
+                        <ui:Label text="Estado" name="level-status-text" class="status-text" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+
+                <!-- Lomo del libro (decorativo) -->
+                <ui:VisualElement class="book-spine" />
+
+                <!-- Pagina derecha: preview + accion -->
+                <ui:VisualElement class="page page-right">
+                    <ui:VisualElement class="level-preview" name="level-preview">
+                        <!-- Sello de cera (visible solo si bloqueado) -->
+                        <ui:VisualElement name="wax-seal" class="wax-seal">
+                            <ui:Label text="?" class="wax-seal-icon" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Button text="ENTRAR" name="btn-enter-level" class="menu-button primary-button enter-button" tooltip="Comenzar este nivel" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Navegacion del libro -->
+            <ui:VisualElement class="book-nav">
+                <ui:Button text="&lt;" name="btn-prev-page" class="nav-button" tooltip="Capitulo anterior" />
+                <ui:Label text="Capitulo 1 / 6" name="page-indicator" class="page-indicator" />
+                <ui:Button text="&gt;" name="btn-next-page" class="nav-button" tooltip="Capitulo siguiente" />
+            </ui:VisualElement>
+
+            <ui:Button text="VOLVER" name="btn-back-from-book" class="menu-button back-button" tooltip="Volver al menu principal" />
+        </ui:VisualElement>
+
+        <!-- ===== PANEL DE OPCIONES ===== -->
+        <ui:VisualElement name="options-panel" class="panel center-panel hidden">
+            <ui:Label text="OPCIONES" class="panel-title" />
+
+            <ui:VisualElement class="slider-group">
+                <ui:Label text="Volumen General" class="slider-label" />
+                <ui:Slider name="slider-master" value="1" low-value="0" high-value="1" class="menu-slider" tooltip="Volumen general del juego" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="slider-group">
+                <ui:Label text="Volumen Musica" class="slider-label" />
+                <ui:Slider name="slider-music" value="0.7" low-value="0" high-value="1" class="menu-slider" tooltip="Volumen de la musica de fondo" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="slider-group">
+                <ui:Label text="Volumen SFX" class="slider-label" />
+                <ui:Slider name="slider-sfx" value="1" low-value="0" high-value="1" class="menu-slider" tooltip="Volumen de los efectos de sonido" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="slider-group">
+                <ui:Label text="Progreso" class="slider-label" />
+                <ui:Button text="BORRAR PARTIDA" name="btn-reset-progress" class="menu-button danger-button small-button" tooltip="Borra todo el progreso guardado" />
+            </ui:VisualElement>
+
+            <ui:Button text="VOLVER" name="btn-back-from-options" class="menu-button back-button" tooltip="Volver al menu principal" />
+        </ui:VisualElement>
+
+        <!-- ===== DIALOGO DE CONFIRMACION ===== -->
+        <ui:VisualElement name="confirm-dialog" class="modal-overlay hidden">
+            <ui:VisualElement class="modal-dialog">
+                <ui:Label text="CONFIRMAR" name="confirm-title" class="modal-title" />
+                <ui:Label text="Seguro que quieres borrar todo el progreso?" name="confirm-message" class="modal-message" />
+                <ui:VisualElement class="modal-buttons">
+                    <ui:Button text="SI, BORRAR" name="btn-confirm-yes" class="menu-button danger-button" />
+                    <ui:Button text="CANCELAR" name="btn-confirm-no" class="menu-button" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Footer -->
+        <ui:Label text="The Eternal Chronogem v1.0" class="footer-label" />
+    </ui:VisualElement>
+</ui:UXML>

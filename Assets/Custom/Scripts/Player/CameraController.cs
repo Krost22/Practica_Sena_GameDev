@@ -11,7 +11,7 @@ public class CameraController : MonoBehaviour
     void Start()
     {
         // Asignar automáticamente la cámara activa si está habilitado
-        if (autoAssignActiveCamera)
+        if (autoAssignActiveCamera && playerCamera == null)
         {
             AssignActiveCamera();
         }
@@ -19,10 +19,16 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-        // Verificar y actualizar la cámara activa si es necesario
-        if (autoAssignActiveCamera && (playerCamera == null || !playerCamera.gameObject.activeInHierarchy))
+        // Ya no buscamos todas las cámaras cada frame.
+        // El CameraManager notifica vía SetPlayerCamera() cuando cambia la cámara activa.
+        // Solo reasignamos si perdimos la referencia (cámara destruida/desactivada)
+        if (playerCamera != null && !playerCamera.gameObject.activeInHierarchy)
         {
-            AssignActiveCamera();
+            playerCamera = null;
+            if (autoAssignActiveCamera)
+            {
+                AssignActiveCamera();
+            }
         }
     }
 
@@ -32,21 +38,21 @@ public class CameraController : MonoBehaviour
     public Vector3 GetMovementDirection(float horizontal, float vertical)
     {
         Camera cameraToUse = GetActiveCamera();
-        
+
         // Si no hay cámara válida, usar dirección por defecto
         if (cameraToUse == null)
         {
             return new Vector3(horizontal, 0, vertical).normalized;
         }
-        
+
         Vector3 cameraForward = cameraToUse.transform.forward;
         Vector3 cameraRight = cameraToUse.transform.right;
-        
+
         cameraForward.y = 0;
         cameraRight.y = 0;
         cameraForward.Normalize();
         cameraRight.Normalize();
-        
+
         return (cameraForward * vertical + cameraRight * horizontal).normalized;
     }
 
@@ -55,32 +61,14 @@ public class CameraController : MonoBehaviour
     /// </summary>
     public Camera GetActiveCamera()
     {
-        // Intentar usar la referencia directa a la cámara primero
-        Camera cameraToUse = playerCamera;
-        
-        // Verificar si la cámara asignada está activa
-        if (cameraToUse != null && (!cameraToUse.gameObject.activeInHierarchy || !cameraToUse.enabled))
+        // Usar la referencia directa (asignada por CameraManager o auto-detección)
+        if (playerCamera != null && playerCamera.gameObject.activeInHierarchy && playerCamera.enabled)
         {
-            cameraToUse = null;
+            return playerCamera;
         }
-        
-        // Si no hay referencia válida, buscar cámara activa automáticamente
-        if (cameraToUse == null && autoAssignActiveCamera)
-        {
-            cameraToUse = FindActiveCamera();
-            if (cameraToUse != null)
-            {
-                playerCamera = cameraToUse; // Actualizar la referencia
-            }
-        }
-        
-        // Si aún no hay cámara válida, usar Camera.main
-        if (cameraToUse == null)
-        {
-            cameraToUse = Camera.main;
-        }
-        
-        return cameraToUse;
+
+        // Fallback: Camera.main (cacheado por Unity)
+        return Camera.main;
     }
 
     /// <summary>
@@ -88,9 +76,9 @@ public class CameraController : MonoBehaviour
     /// </summary>
     private void AssignActiveCamera()
     {
-        // Buscar la cámara activa en la escena
+        // Buscar la cámara activa en la escena (solo al inicio o tras perder la referencia)
         Camera activeCamera = FindActiveCamera();
-        
+
         if (activeCamera != null)
         {
             playerCamera = activeCamera;
@@ -101,25 +89,17 @@ public class CameraController : MonoBehaviour
             Debug.LogWarning("CameraController: No se encontró ninguna cámara activa para asignar automáticamente.");
         }
     }
-    
+
     /// <summary>
-    /// Encuentra la cámara actualmente activa en la escena
+    /// Encuentra la cámara actualmente activa en la escena (solo al inicio, no cada frame)
     /// </summary>
     private Camera FindActiveCamera()
     {
-        // Buscar todas las cámaras en la escena
-        Camera[] allCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);
-        
-        // Prioridad 1: Buscar cámara con tag "MainCamera" que esté activa
-        foreach (Camera cam in allCameras)
-        {
-            if (cam.CompareTag("MainCamera") && cam.gameObject.activeInHierarchy && cam.enabled)
-            {
-                return cam;
-            }
-        }
-        
-        // Prioridad 2: Buscar la primera cámara activa y habilitada
+        // Prioridad 1: Camera.main (Unity cachea la cámara con tag MainCamera)
+        if (Camera.main != null) return Camera.main;
+
+        // Prioridad 2: Buscar la primera cámara activa (Unity 6 API sin FindObjectsSortMode)
+        Camera[] allCameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude);
         foreach (Camera cam in allCameras)
         {
             if (cam.gameObject.activeInHierarchy && cam.enabled)
@@ -127,11 +107,22 @@ public class CameraController : MonoBehaviour
                 return cam;
             }
         }
-        
-        // Prioridad 3: Usar Camera.main como último recurso
-        return Camera.main;
+
+        return null;
     }
-    
+
+    /// <summary>
+    /// Método público para forzar la asignación de cámara activa.
+    /// Llamado por CameraManager cuando una cámara se activa vía trigger.
+    /// </summary>
+    public void SetPlayerCamera(Camera newCamera)
+    {
+        if (newCamera != null)
+        {
+            playerCamera = newCamera;
+        }
+    }
+
     /// <summary>
     /// Método público para forzar la asignación de cámara activa
     /// </summary>

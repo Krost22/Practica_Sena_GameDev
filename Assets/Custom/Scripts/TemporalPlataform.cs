@@ -1,7 +1,8 @@
 using System.Collections;
 using UnityEngine;
 
-public class TemporalPlataform : MonoBehaviour
+// Implementa ITimeScalable para que el slow-mo afecte su ciclo (consistencia con CrumblingPlatform)
+public class TemporalPlataform : MonoBehaviour, ITimeScalable
 {
     public float tiempoActivo = 3f;         // Tiempo que la plataforma está totalmente visible
     public float tiempoInactivo = 2f;       // Tiempo que la plataforma permanece desactivada
@@ -12,6 +13,14 @@ public class TemporalPlataform : MonoBehaviour
     private Collider col;
     private Material mat;
     private float alpha = 1f;
+
+    // Factor de tiempo local (1 = normal, 0.2 = slow-mo)
+    private float _timeScale = 1f;
+
+    public void SetTimeScale(float scale)
+    {
+        _timeScale = scale;
+    }
 
     void Start()
     {
@@ -33,7 +42,7 @@ public class TemporalPlataform : MonoBehaviour
             yield return StartCoroutine(AparecerPlataforma());
 
             // 2. Permanecer totalmente visible por 'tiempoActivo'
-            yield return new WaitForSeconds(tiempoActivo);
+            yield return StartCoroutine(WaitScaled(tiempoActivo));
 
             // 3. DESVANECER (Fade Out)
             yield return StartCoroutine(DesvanecerPlataforma());
@@ -41,7 +50,18 @@ public class TemporalPlataform : MonoBehaviour
             col.enabled = false;
 
             // 4. Permanecer inactiva por 'tiempoInactivo'
-            yield return new WaitForSeconds(tiempoInactivo);
+            yield return StartCoroutine(WaitScaled(tiempoInactivo));
+        }
+    }
+
+    // Espera respetando el timeScale local (slow-mo)
+    IEnumerator WaitScaled(float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime * _timeScale;
+            yield return null;
         }
     }
 
@@ -50,7 +70,7 @@ public class TemporalPlataform : MonoBehaviour
         float t = 0f;
         while (t < tiempoAparicion)
         {
-            t += Time.deltaTime;
+            t += Time.deltaTime * _timeScale;
             alpha = Mathf.Lerp(0f, 1f, t / tiempoAparicion);
             mat.SetFloat("_Transparency", alpha);
             yield return null;
@@ -62,7 +82,7 @@ public class TemporalPlataform : MonoBehaviour
         float t = 0f;
         while (t < tiempoDesvanecimiento)
         {
-            t += Time.deltaTime;
+            t += Time.deltaTime * _timeScale;
             alpha = Mathf.Lerp(1f, 0f, t / tiempoDesvanecimiento);
             mat.SetFloat("_Transparency", alpha);
             yield return null;
